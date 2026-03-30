@@ -99,3 +99,6 @@ Select board: ESP32 Dev Module
 Choose correct COM port
 
 Click Upload
+
+**Video Explaination**
+: https://drive.google.com/file/d/1UpuhagCilEc59ricT0hPrWlclSaLs_aI/view?usp=drivesdk
