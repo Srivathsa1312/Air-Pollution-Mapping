@@ -15,13 +15,41 @@ TinyGPSPlus gps;
 HardwareSerial gpsSerial(2);
 
 // ---------------- MQ135 ----------------
-int getMQ135() {
+float R0 = 25.0;   // Adjust after recalibration
+float RL = 10.0;
+
+int samples = 10;
+
+int getAvg() {
   long sum = 0;
-  for (int i = 0; i < 10; i++) {
+  for (int i = 0; i < samples; i++) {
     sum += analogRead(MQ135_PIN);
-    delay(20);
+    delay(50);
   }
-  return sum / 10;
+  return sum / samples;
+}
+char* getMQ135() {
+  int adc = getAvg();
+  float voltage = adc * (3.3 / 4095.0);
+
+  if (voltage <= 0.01) {
+    Serial.println("Sensor error");
+  }
+
+  float Rs = ((3.3 - voltage) / voltage) * RL;
+  float ratio = Rs / R0;
+
+  // ---- Improved Estimations ----
+  float CO2 = 400 * pow(ratio, -1.8);   // corrected baseline
+  float NH3 = 100 * pow(ratio, -2.2);
+  float Benzene = 50 * pow(ratio, -2.0);
+  float Smoke = 150 * pow(ratio, -2.5);
+
+  Serial.print("CO2: "); Serial.print(CO2); Serial.println(" ppm");
+  Serial.print("NH3: "); Serial.print(NH3); Serial.println(" ppm");
+  Serial.print("Benzene: "); Serial.print(Benzene); Serial.println(" ppm");
+  Serial.print("Smoke: "); Serial.print(Smoke); Serial.println(" ppm");
+  return "sensing";
 }
 
 // ---------------- AQI ----------------
@@ -74,13 +102,13 @@ void loop() {
   if (dust_mg < 0) dust_mg = 0;
 
   // Step 3: Convert to µg/m³
-  float pm25 = dust_mg * 0.0;
+  float pm25 = dust_mg *63;
 
   // ===== AQI =====
   int AQI = calculateAQI(pm25);
 
   // ===== MQ135 =====
-  int mq = getMQ135();
+  char* mq = getMQ135();
 
   // ===== DHT =====
   float temp = dht.getTemperature();
@@ -105,8 +133,8 @@ void loop() {
   Serial.print("AQI: ");
   Serial.println(AQI);
 
-  if (AQI <= 50) Serial.println("Status: GOOD 🟢");
-  else if (AQI <= 100) Serial.println("Status: MODERATE 🟡");
+  if (AQI <= 90) Serial.println("Status: GOOD 🟢");
+  else if (AQI <= 250) Serial.println("Status: MODERATE 🟡");
   else Serial.println("Status: UNHEALTHY 🔴");
 
   Serial.print("MQ135: ");
