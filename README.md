@@ -1,5 +1,6 @@
 **Low-Cost Air Quality Monitoring Device (ESP32)**
 
+------------------------------------------------------------------------------------------------------------------------------------------------------------------
   This project is a low-cost air quality monitoring system built using an ESP32 microcontroller. It measures environmental parameters like air pollution, dust particles, temperature, humidity, and location.
 
 **Features**
